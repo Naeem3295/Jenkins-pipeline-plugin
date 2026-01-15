@@ -1,126 +1,3 @@
-// ==========================================
-// JENKINS PIPELINE EXAMPLES - FULL GUIDE
-// ==========================================
-
-// 1. SIMPLE DECLARATIVE PIPELINE
-pipeline {
-    agent any
-
-    stages {
-        stage('build') {
-            steps {
-                echo 'Hello World 111'
-            }
-        }
-        stage('test') {
-            steps {
-                echo 'Hello World test222'
-            }    
-        }
-    }
-}
-
-// ==========================================
-
-// 2. PIPELINE WITH ENVIRONMENT VARIABLES
-pipeline {
-    agent any
-    environment {
-        IMAGE_NAME = "devopssteps/my-app"
-    }
-    stages {
-        stage('build') {
-            steps {
-                echo "${IMAGE_NAME}"
-            }
-        }
-        stage('test') {
-            steps {
-                echo 'Hello World test222'
-            }    
-        }
-    }
-}
-
-// ==========================================
-
-// 3. PIPELINE WITH PARAMETERS & IF-ELSE CONDITIONS
-pipeline {
-    agent any
-
-    parameters {
-        choice(name: 'ENVIRONMENT', choices: ['dev', 'staging', 'prod'], description: 'Select the environment to deploy')
-    }
-
-    stages {
-        stage('Print Selected Environment') {
-            steps {
-                echo "Selected Environment: ${params.ENVIRONMENT}"
-            }
-        }
-
-        stage('Conditional Execution') {
-            steps {
-                script {
-                    if (params.ENVIRONMENT == 'dev') {
-                        echo "Deploying to Development environment"
-                        // Add dev deployment logic here
-                    } else if (params.ENVIRONMENT == 'staging') {
-                        echo "Deploying to Staging environment"
-                        // Add staging deployment logic here
-                    } else if (params.ENVIRONMENT == 'prod') {
-                        echo "Deploying to Production environment"
-                        // Add production deployment logic here
-                    } else {
-                        error("Invalid environment selected!")
-                    }
-                }
-            }
-        }
-    }
-}
-
-// ==========================================
-
-// 4. PIPELINE WITH WHEN CONDITION & DOCKER BUILD
-pipeline {
-    agent any
-
-    parameters {
-        string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Docker image tag')
-        booleanParam(name: 'PUSH_IMAGE', defaultValue: true, description: 'Push image to Docker Hub?')
-    }
-    environment {
-        IMAGE_NAME = "devopssteps/my-app-15"
-    }
-
-    stages {
-        stage('clone') {
-            steps {
-                echo 'clone code............'
-                checkout scm
-            }
-        }
-        stage('build image') {
-            steps {
-                echo "Building Docker image with tag: ${params.IMAGE_TAG}"
-                sh "docker build -t ${IMAGE_NAME}:${params.IMAGE_TAG} ."
-            }
-        }
-        stage('push image') {
-            when {
-                expression { return params.PUSH_IMAGE }
-            }
-            steps {
-                echo "Pushing Docker image with tag: ${params.IMAGE_TAG}"
-            }
-        }
-    }
-}
-
-// ==========================================
-
-// 5. COMPLETE PIPELINE WITH POST BLOCK
 pipeline {
     agent any
 
@@ -135,39 +12,64 @@ pipeline {
     }
 
     stages {
-        stage('clone') {
+        stage('Clone') {
             steps {
-                echo 'Cloning code............'
+                echo 'Cloning code from GitHub............'
                 checkout scm
             }
         }
         
-        stage('build image') {
+        stage('Build') {
             steps {
-                echo "Building Docker image with tag: ${params.IMAGE_TAG}"
-                sh "docker build -t ${IMAGE_NAME}:${params.IMAGE_TAG} ."
+                echo 'Hello World 111 - Building application'
+                echo "Environment: ${params.ENVIRONMENT}"
+                echo "Image Name: ${IMAGE_NAME}"
+                echo "Image Tag: ${params.IMAGE_TAG}"
             }
         }
         
-        stage('push image') {
+        stage('Test') {
+            steps {
+                echo 'Hello World test222 - Running tests'
+                echo 'All tests passed!'
+            }    
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    echo "Building Docker image: ${IMAGE_NAME}:${params.IMAGE_TAG}"
+                    // Uncomment jodi Docker build korte chan:
+                    // sh "docker build -t ${IMAGE_NAME}:${params.IMAGE_TAG} ."
+                }
+            }
+        }
+        
+        stage('Push Docker Image') {
             when {
                 expression { return params.PUSH_IMAGE }
             }
             steps {
-                echo "Pushing Docker image with tag: ${params.IMAGE_TAG}"
+                echo "Pushing Docker image: ${IMAGE_NAME}:${params.IMAGE_TAG}"
+                // Uncomment jodi push korte chan:
                 // sh "docker push ${IMAGE_NAME}:${params.IMAGE_TAG}"
             }
         }
         
-        stage('deploy') {
+        stage('Deploy') {
             steps {
                 script {
                     if (params.ENVIRONMENT == 'dev') {
-                        echo "Deploying to Development environment"
+                        echo "🚀 Deploying to Development environment"
+                        echo "Dev deployment logic here..."
                     } else if (params.ENVIRONMENT == 'staging') {
-                        echo "Deploying to Staging environment"
+                        echo "🚀 Deploying to Staging environment"
+                        echo "Staging deployment logic here..."
                     } else if (params.ENVIRONMENT == 'prod') {
-                        echo "Deploying to Production environment"
+                        echo "🚀 Deploying to Production environment"
+                        echo "Production deployment logic here..."
+                    } else {
+                        error("Invalid environment selected!")
                     }
                 }
             }
@@ -176,13 +78,16 @@ pipeline {
 
     post {
         success {
-            echo 'Pipeline succeeded! ✅'
+            echo '✅ Pipeline succeeded!'
+            echo 'All stages completed successfully.'
         }
         failure {
-            echo 'Pipeline failed. ❌'
+            echo '❌ Pipeline failed.'
+            echo 'Please check the logs above for errors.'
         }
         always {
-            echo 'Pipeline execution completed.'
+            echo '🏁 Pipeline execution completed.'
+            echo "Total stages executed: Clone, Build, Test, Build Image, Push Image, Deploy"
         }
     }
 }
